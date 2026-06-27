@@ -1,0 +1,45 @@
+name: CI/CD Pipeline for S3 & CloudFront
+
+on:
+  push:
+    branches:
+      - main  # Triggers the pipeline only on pushes to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the repository code onto the runner
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # Step 2: Configure AWS Credentials using the secrets you saved
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1 # Change to your specific bucket region
+
+    # Step 3: Optional Build Step (Uncomment if using React, Vue, Next.js, etc.)
+    # - name: Install Dependencies & Build
+    #   run: |
+    #     npm install
+    #     npm run build
+
+    # Step 4: Deploy files to S3
+    # Replace 'your-s3-bucket-name' with your actual AWS bucket name
+    # If using a build framework, change 'source-dir: .' to 'source-dir: ./dist' or './build'
+    - name: Deploy to S3 Bucket
+      uses: jakejarvis/s3-sync-action@master
+      with:
+        args: --delete
+      env:
+        AWS_S3_BUCKET: 'amazn-s3-demos14'
+        SOURCE_DIR: '.' 
+
+    # Step 5: Invalidate CloudFront Cache (Ensures updates are live immediately)
+    - name: Invalidate CloudFront Cache
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
