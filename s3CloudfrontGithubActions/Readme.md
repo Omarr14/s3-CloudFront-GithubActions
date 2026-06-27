@@ -1,0 +1,1 @@
+This project aims at deploying using aws(s3,cloudfront) and github actions using a static website.
